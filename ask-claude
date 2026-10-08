@@ -24,7 +24,7 @@ launch() {
     q=$1
     [ -z "$q" ] && exit 0
     mkdir -p "$WORKDIR"
-    notify -u low -t 2000 -i dialog-information "Asking Claude" "$q"
+    notify -u low -t "${ASK_CLAUDE_NOTIFY_MS:-5000}" -i audio-input-microphone "${2:-Asking Claude}" "$q"
     exec kitty --class ask-claude --title "Claude" --directory "$WORKDIR" claude "$q"
 }
 
@@ -56,7 +56,7 @@ stop_and_ask() {
     rm -f "$wav"
 
     [ -z "$text" ] && { notify -u normal -t 3000 -i audio-input-microphone "Didn't catch that" "Try again a little closer to the mic"; exit 0; }
-    launch "$text"
+    launch "$text" "Transcribed"
 }
 
 case "${1:-}" in

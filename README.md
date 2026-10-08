@@ -9,9 +9,9 @@ no audio leaves the machine.
 
 ## How it looks
 
-| Listening | Transcribing |
-|-----------|--------------|
-| ![Listening notification](docs/listening.png) | ![Transcribing notification](docs/transcribing.png) |
+| Listening | Transcribing | Transcribed |
+|-----------|--------------|-------------|
+| ![Listening notification](docs/listening.png) | ![Transcribing notification](docs/transcribing.png) | ![Transcribed notification](docs/transcribed.png) |
 
 Then Claude Code opens with your question already asked:
 
@@ -38,6 +38,7 @@ stops on its own after 2 minutes if you forget.
 | `ASK_CLAUDE_MODEL`       | `~/Downloads/ggml-base.en.bin`     |
 | `ASK_CLAUDE_DIR`         | `~/claude-chat` (sessions start here) |
 | `ASK_CLAUDE_MAX_SECONDS` | `120`                              |
+| `ASK_CLAUDE_NOTIFY_MS`   | `5000` (how long the "Transcribed" popup shows) |
 
 ## Setup
 
