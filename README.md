@@ -7,6 +7,16 @@ streaming right away and you can keep the conversation going.
 Speech-to-text runs locally with [whisper.cpp](https://github.com/ggml-org/whisper.cpp);
 no audio leaves the machine.
 
+## How it looks
+
+| Listening | Transcribing |
+|-----------|--------------|
+| ![Listening notification](docs/listening.png) | ![Transcribing notification](docs/transcribing.png) |
+
+Then Claude Code opens with your question already asked:
+
+![Claude Code answering a spoken question](docs/claude.png)
+
 ## Usage
 
 ```sh
