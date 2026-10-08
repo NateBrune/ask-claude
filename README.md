@@ -7,23 +7,19 @@ streaming right away and you can keep the conversation going.
 Speech-to-text runs locally with [whisper.cpp](https://github.com/ggml-org/whisper.cpp);
 no audio leaves the machine.
 
-## Keys (Openbox, `~/.config/openbox/rc.xml`)
-
-| Key             | Does                                                        |
-|-----------------|-------------------------------------------------------------|
-| `Alt+A`         | Start listening; press again to stop and send               |
-| `Alt+Shift+A`   | Type the question in a rofi box                             |
-
-While listening, a red-bordered "Listening…" notification stays up. Recording
-stops on its own after 2 minutes if you forget.
-
 ## Usage
 
 ```sh
-ask-claude voice          # toggle recording (what Alt+A runs)
-ask-claude type           # rofi prompt (what Alt+Shift+A runs)
+ask-claude voice          # toggle recording: run once to start, again to stop and send
+ask-claude type           # rofi prompt
 ask-claude "some question"
 ```
+
+Bind `ask-claude voice` and `ask-claude type` to hotkeys in your window manager or
+desktop environment.
+
+While listening, a red-bordered "Listening…" notification stays up. Recording
+stops on its own after 2 minutes if you forget.
 
 ## Settings (environment variables)
 
