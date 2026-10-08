@@ -1,0 +1,71 @@
+#!/bin/sh
+# ask-claude — ask Claude Code a question by voice or by typing, from a key binding.
+#
+#   ask-claude voice    press once to start recording, again to stop → transcribe → open Claude
+#   ask-claude type     type the question in a rofi box
+#   ask-claude "text"   ask directly
+#
+# Speech-to-text runs locally with whisper.cpp; no audio leaves the machine.
+
+PATH="$HOME/.local/bin:$PATH"
+MODEL=${ASK_CLAUDE_MODEL:-$HOME/Downloads/ggml-base.en.bin}
+WORKDIR=${ASK_CLAUDE_DIR:-$HOME/claude-chat}
+MAX_SECONDS=${ASK_CLAUDE_MAX_SECONDS:-120}   # recording auto-stops after this
+THEME=$HOME/.config/rofi/launcher.rasi
+
+run=${XDG_RUNTIME_DIR:-/tmp}/ask-claude
+pidfile=$run/rec.pid
+wav=$run/question.wav
+
+notify() { notify-send -a ask-claude -h string:x-dunst-stack-tag:ask-claude "$@"; }
+die()    { notify -u critical "Ask Claude" "$1"; echo "ask-claude: $1" >&2; exit 1; }
+
+launch() {
+    q=$1
+    [ -z "$q" ] && exit 0
+    mkdir -p "$WORKDIR"
+    notify -u low -t 2000 -i dialog-information "Asking Claude" "$q"
+    exec kitty --class ask-claude --title "Claude" --directory "$WORKDIR" claude "$q"
+}
+
+recording() { [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; }
+
+start_recording() {
+    command -v whisper-cli >/dev/null || die "whisper-cli not found (see ~/Projects/ask-claude/README.md)"
+    [ -f "$MODEL" ] || die "Speech model not found: $MODEL"
+    mkdir -p "$run"; rm -f "$wav"
+
+    pw-record --rate 16000 --channels 1 --format s16 "$wav" &
+    rec=$!
+    echo "$rec" > "$pidfile"
+    notify -u critical -t 0 -i audio-input-microphone "Listening…" "Press the key again to send"
+
+    # Safety net: finish automatically if the key is never pressed again
+    ( sleep "$MAX_SECONDS"; [ "$(cat "$pidfile" 2>/dev/null)" = "$rec" ] && "$0" voice ) >/dev/null 2>&1 &
+}
+
+stop_and_ask() {
+    rec=$(cat "$pidfile"); rm -f "$pidfile"
+    kill -INT "$rec" 2>/dev/null
+    i=0; while kill -0 "$rec" 2>/dev/null && [ $i -lt 20 ]; do sleep 0.1; i=$((i + 1)); done
+
+    notify -u normal -t 0 -i audio-input-microphone "Transcribing…" ""
+    text=$(whisper-cli -m "$MODEL" -f "$wav" -l en -t "$(nproc)" -nt -np 2>/dev/null |
+        tr '\n' ' ' |
+        sed -E 's/\[[A-Z_ ]+\]//g; s/\((silence|music|inaudible)\)//gI; s/^[[:space:]]+//; s/[[:space:]]+$//; s/[[:space:]]+/ /g')
+    rm -f "$wav"
+
+    [ -z "$text" ] && { notify -u normal -t 3000 -i audio-input-microphone "Didn't catch that" "Try again a little closer to the mic"; exit 0; }
+    launch "$text"
+}
+
+case "${1:-}" in
+    voice) if recording; then stop_and_ask; else start_recording; fi ;;
+    type)
+        q=$(rofi -dmenu -p "$(printf '\357\222\255') Ask Claude" -theme "$THEME" \
+            -theme-str 'listview { enabled: false; } mode-switcher { enabled: false; } entry { placeholder: "Type your question…"; }' \
+            </dev/null) || exit 0
+        launch "$q" ;;
+    ""|-h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) launch "$*" ;;
+esac
